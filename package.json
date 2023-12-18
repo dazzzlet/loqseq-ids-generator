@@ -1,0 +1,40 @@
+{
+  "name": "logseq-ids-generator",
+  "version": "0.0.1",
+  "author": "@Dazzzlet",
+  "main": "index.html",
+  "description": "LogSeq sequence and non-sequence IDs generator",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "logseq": {
+    "id": "_ids_generator",
+    "title": "IDs Generator",
+    "icon": "icon.png"
+  },
+  "type": "module",
+  "dependencies": {
+    "@logseq/libs": "^0.0.15",
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@radix-ui/colors": "^3.0.0",
+    "@radix-ui/react-collapsible": "^1.0.3",
+    "@radix-ui/react-toolbar": "^1.0.4",
+    "@stitches/react": "^1.2.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vite-plugin-static-copy": "^1.0.0",
+    "vite-tsconfig-paths": "^4.2.2"
+  }
+}

@@ -1,0 +1,1 @@
+export const SLASH_TRIGGER_EVENT = 'logseq:ids-generator:slash';
