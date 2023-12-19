@@ -5,6 +5,8 @@ import { css, darkTheme } from './stitches.config';
 import { useAppVisible } from 'hooks/useAppVisible';
 import { useThemeMode } from 'hooks/useThemeMode';
 import { useFocus } from 'hooks/useFocus';
+import { PrefixList } from 'components/PrefixList';
+import { TagSortType } from 'enums';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -79,6 +81,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
                         placeholder='Search id'
                         onChange={handleSearchInputChange}
                     />
+                    <PrefixList filter={filter} sortType={TagSortType.NameAsc} />
                 </div>
             </main>
         );
