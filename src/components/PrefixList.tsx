@@ -16,9 +16,21 @@ const StyldTagList = styled('div', {
 type Props = {
     filter: string;
     sortType: TagSortType;
+    selected: number;
 };
 
-export function PrefixList({ filter, sortType }: Props) {
+const isActive = (activeIndex: number, index: number, total: number): boolean => {
+    if (total == 0) {
+        total = 1;
+    }
+    if (activeIndex < 0) {
+        activeIndex = total + activeIndex;
+    }
+    activeIndex = activeIndex % total;
+    return activeIndex === index;
+}
+
+export function PrefixList({ filter, sortType, selected }: Props) {
     const prefixes = useIdPrefixPages();
 
     const orderByFuncBySorType = {
@@ -27,7 +39,6 @@ export function PrefixList({ filter, sortType }: Props) {
         [TagSortType.UsageAsc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage),
         [TagSortType.UsageDesc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage, true),
     };
-    console.log(prefixes);
 
     return (
         <StyldTagList>
@@ -37,9 +48,11 @@ export function PrefixList({ filter, sortType }: Props) {
                     if (filter.trim() === '') return true;
                     return prefix.includes(filter);
                 })
-                .map(([prefix, page], index) => {
+                .map(([prefix, page], index, array) => {
                     return (
-                        <PrefixEntry key={prefix} prefixPage={page} />
+                        <PrefixEntry key={prefix}
+                            active={isActive(selected, index, array.length)}
+                            prefixPage={page} />
                     );
                 })}
         </StyldTagList>

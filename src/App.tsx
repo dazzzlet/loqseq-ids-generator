@@ -7,6 +7,7 @@ import { useThemeMode } from 'hooks/useThemeMode';
 import { useFocus } from 'hooks/useFocus';
 import { PrefixList } from 'components/PrefixList';
 import { TagSortType } from 'enums';
+import { KEY_DOWN, KEY_ESCAPE, KEY_UP } from 'const';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -51,6 +52,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
     const [inputRef, setFocus] = useFocus();
     const [isVisible] = useAppVisible();
     const [filter, setFilter] = useState('');
+    const [selected, setSelected] = useState(0);
     const themeMode = useThemeMode(initialThemeMode);
 
     useEffect(() => {
@@ -61,7 +63,20 @@ export function App({ themeMode: initialThemeMode }: Props) {
 
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilter(e.target.value);
+        setSelected(0);
     };
+
+    const handleInputKeyDown = (e: React.KeyboardEvent) => {
+        if (e.code == KEY_UP) {
+            e.stopPropagation();
+            setSelected(value => value - 1);
+        } else if (e.key == KEY_DOWN) {
+            e.stopPropagation();
+            setSelected(value => value + 1);
+        } else if (e.key == KEY_ESCAPE) {
+            window.logseq.hideMainUI();
+        }
+    }
 
     if (isVisible) {
         return (
@@ -80,8 +95,9 @@ export function App({ themeMode: initialThemeMode }: Props) {
                         ref={inputRef}
                         placeholder='Search id'
                         onChange={handleSearchInputChange}
+                        onKeyDown={handleInputKeyDown}
                     />
-                    <PrefixList filter={filter} sortType={TagSortType.NameAsc} />
+                    <PrefixList filter={filter} selected={selected} sortType={TagSortType.NameAsc} />
                 </div>
             </main>
         );
