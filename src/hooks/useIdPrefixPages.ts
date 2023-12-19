@@ -7,28 +7,34 @@ import { PrefixPage } from "models/PrefixPage";
 export const useIdPrefixPages = (): Record<string, PrefixPage> => {
     const [result] = useLogseqQuery<[string, string, number, boolean, string, QueryResultPageEntity, number, string]>(`
         [
-            :find ?name ?prefix ?padding ?sequence ?start (pull ?page [*]) (count ?idPage) (max ?idValue)
+            :find ?name ?prefix ?padding ?sequence ?start (pull ?page [*]) (sum ?sumAttr) (max ?idValue)
             :where
-                  [?rootPage :block/name "idprefix"]
-                  [?blockRef :block/refs ?rootPage]
-                  [?blockRef :block/page ?page]
-                  [?page :block/original-name ?name]
-                  [?page :block/properties ?pageProps]
-                  [(get ?pageProps :type) ?pageType]
-                  [(contains? ?pageType "IdPrefix")]
-                  [(get ?pageProps :prefix) ?prefix]
-                  [(get ?pageProps :padding) ?padding]
-                  [(get ?pageProps :sequence) ?sequence]
-                  [(get ?pageProps :start) ?start]
-                  
-                  [(str "(?i)^" ?prefix "-\\\\d+$") ?pattern]
-                  [(re-pattern ?pattern) ?match]
-                  [(re-pattern "(?i)\\\\d+$") ?idMatch]
+                [?rootPage :block/name "idprefix"]
+                [?blockRef :block/refs ?rootPage]
+                [?blockRef :block/page ?page]
+                [?page :block/original-name ?name]
+                [?page :block/properties ?pageProps]
+                [(get ?pageProps :type) ?pageType]
+                [(contains? ?pageType "IdPrefix")]
+                [(get ?pageProps :prefix) ?prefix]
+                [(get ?pageProps :padding) ?padding]
+                [(get ?pageProps :sequence) ?sequence]
+                [(get ?pageProps :start) ?start]
+                
+                [(str "(?i)^" ?prefix "-\\\\d+$") ?pattern]
+                [(re-pattern ?pattern) ?match]
+                [(re-pattern "(?i)\\\\d+$") ?idMatch]
 
-                  [?usageBlock :block/refs ?idPage]
-                  [?idPage :block/name ?id]
-                  [(re-find ?match ?id)]
-                  [(re-find ?idMatch ?id) ?idValue]
+                (or-join [?match ?idMatch ?start ?sumAttr ?id ?idValue]
+                            (and [?usageBlock :block/refs ?idPage]
+                                    [?idPage :block/name ?id]
+                                    [(re-find ?match ?id)]
+                                    [(re-find ?idMatch ?id) ?idValue]
+                                    [(+ 1) ?sumAttr])
+                            (and [(+ 0) ?id]
+                                    [(str ?start) ?idValue]
+                                    [(+ 0) ?sumAttr])
+                )
         ]
     `);
 
