@@ -1,9 +1,10 @@
 import { AppUserConfigs } from '@logseq/libs/dist/LSPlugin';
 import { Input } from 'components/Input';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, darkTheme } from './stitches.config';
 import { useAppVisible } from 'hooks/useAppVisible';
 import { useThemeMode } from 'hooks/useThemeMode';
+import { useFocus } from 'hooks/useFocus';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -45,9 +46,16 @@ const app = css({
 
 export function App({ themeMode: initialThemeMode }: Props) {
     const innerRef = useRef<HTMLDivElement>(null);
+    const [inputRef, setFocus] = useFocus();
     const [isVisible] = useAppVisible();
     const [filter, setFilter] = useState('');
     const themeMode = useThemeMode(initialThemeMode);
+
+    useEffect(() => {
+        if (isVisible) {
+            setFocus();
+        }
+    }, [isVisible])
 
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilter(e.target.value);
@@ -67,6 +75,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
                     <Input
                         css={{ padding: '$3', borderRadius: '$2' }}
                         size='2'
+                        ref={inputRef}
                         placeholder='Search id'
                         onChange={handleSearchInputChange}
                     />
