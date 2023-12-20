@@ -4,3 +4,9 @@ export enum TagSortType {
     UsageAsc = 'UsageAsc',
     UsageDesc = 'UsageDesc',
 }
+
+export enum VisibleTriggerSource {
+    Toolbar = 'toolbar',
+    SlashMenu = 'slash',
+    None = '',
+}

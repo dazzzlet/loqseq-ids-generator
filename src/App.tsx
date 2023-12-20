@@ -6,8 +6,12 @@ import { useAppVisible } from 'hooks/useAppVisible';
 import { useThemeMode } from 'hooks/useThemeMode';
 import { useFocus } from 'hooks/useFocus';
 import { PrefixList } from 'components/PrefixList';
-import { TagSortType } from 'enums';
-import { KEY_DOWN, KEY_ESCAPE, KEY_UP } from 'const';
+import { TagSortType as PrefixSortType, VisibleTriggerSource } from 'enums';
+import { KEY_DOWN, KEY_ENTER, KEY_ESCAPE, KEY_UP } from 'const';
+import { useIdPrefixPages } from 'hooks/useIdPrefixPages';
+import { PrefixPage } from 'models/PrefixPage';
+import { orderBy } from 'utils';
+import { prefix } from '@fortawesome/free-solid-svg-icons';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -47,13 +51,31 @@ const app = css({
     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
 });
 
+const getActivePrefixId = (prefixes: PrefixPage[], step: number): (selected: string) => string => {
+    return (selected: string) => {
+        const selectedIndex = prefixes.findIndex(prefix => prefix.prefix == selected);
+        if (prefixes.length) {
+            if (selectedIndex == -1) {
+                return prefixes[0].prefix;
+            } else {
+                const nextIndex = (step + prefixes.length + selectedIndex) % prefixes.length;
+                return prefixes[nextIndex].prefix;
+            }
+        } else {
+            return '';
+        }
+    }
+}
+
 export function App({ themeMode: initialThemeMode }: Props) {
     const innerRef = useRef<HTMLDivElement>(null);
     const [inputRef, setFocus] = useFocus();
-    const [isVisible] = useAppVisible();
+    const [isVisible, position, triggerSource] = useAppVisible();
     const [filter, setFilter] = useState('');
-    const [selected, setSelected] = useState(0);
+    const [sortType, setSortType] = useState(PrefixSortType.NameAsc);
+    const [selected, setSelected] = useState('');
     const themeMode = useThemeMode(initialThemeMode);
+    const prefixes = useIdPrefixPages();
 
     useEffect(() => {
         if (isVisible) {
@@ -61,20 +83,52 @@ export function App({ themeMode: initialThemeMode }: Props) {
         }
     }, [isVisible])
 
+    const orderByFuncBySorType = {
+        [PrefixSortType.NameAsc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => a.localeCompare(b),
+        [PrefixSortType.NameDesc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => b.localeCompare(a),
+        [PrefixSortType.UsageAsc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage),
+        [PrefixSortType.UsageDesc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage, true),
+    };
+    const pages = Object.entries(prefixes)
+        .sort(orderByFuncBySorType[sortType])
+        .filter(prefix => {
+            if (filter.trim() === '') return true;
+            return prefix.includes(filter);
+        })
+        .map(([, page]) => page);
+
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilter(e.target.value);
-        setSelected(0);
+        if (pages.length) {
+            setSelected(pages[0].prefix);
+        } else {
+            setSelected('');
+        }
     };
 
+    const executeSelectedPrefix = () => {
+        const page = pages.find(p => p.prefix == selected);
+        if (page) {
+            if (triggerSource == VisibleTriggerSource.SlashMenu) {
+
+            } else if (triggerSource == VisibleTriggerSource.Toolbar) {
+                logseq.App.pushState('page', { name: page.name.toLowerCase() })
+            }
+        }
+    }
+
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
+        console.log('keydown', e.code, selected);
         if (e.code == KEY_UP) {
             e.stopPropagation();
-            setSelected(value => value - 1);
+            setSelected(getActivePrefixId(pages, -1));
         } else if (e.key == KEY_DOWN) {
             e.stopPropagation();
-            setSelected(value => value + 1);
+            setSelected(getActivePrefixId(pages, 1));
         } else if (e.key == KEY_ESCAPE) {
             window.logseq.hideMainUI();
+        } else if (e.key == KEY_ENTER) {
+            executeSelectedPrefix();
         }
     }
 
@@ -97,7 +151,10 @@ export function App({ themeMode: initialThemeMode }: Props) {
                         onChange={handleSearchInputChange}
                         onKeyDown={handleInputKeyDown}
                     />
-                    <PrefixList filter={filter} selected={selected} sortType={TagSortType.NameAsc} />
+                    <PrefixList
+                        selected={selected}
+                        prefixes={pages}
+                    />
                 </div>
             </main>
         );
