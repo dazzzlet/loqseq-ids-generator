@@ -151,15 +151,9 @@ export function App({ themeMode: initialThemeMode }: Props) {
     useEffect(() => {
         if (isVisible) {
             setFocus();
-        }
-    }, [isVisible])
-
-    useEffect(() => {
-        if (isVisible) {
             setSelected(pages[0].prefix);
         }
-    }, [prefixes, isVisible])
-
+    }, [isVisible, prefixes])
 
     if (isVisible) {
         return (

@@ -1,8 +1,8 @@
-import { useLayoutEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useLayoutEffect, useMemo, useState } from "react";
 import { useMountedState } from "./useMountedState";
 
 
-export const useLogseqQuery = <TResult>(initialQuery: string): [TResult[], (newQuery: string) => void] => {
+export const useLogseqQuery = <TResult>(initialQuery: string): [TResult[], Dispatch<SetStateAction<string>>, string] => {
     const isMounted = useMountedState();
     const [query, setNewQuery] = useState<string>(initialQuery);
     const [result, setResult] = useState<TResult[]>([]);
@@ -18,5 +18,5 @@ export const useLogseqQuery = <TResult>(initialQuery: string): [TResult[], (newQ
             }
         })();
     }, [query]);
-    return [result, setNewQuery];
+    return [result, setNewQuery, query];
 }
