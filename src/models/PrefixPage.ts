@@ -8,5 +8,5 @@ export type PrefixPage = {
     start: number;
     usage: number;
     max: number;
-    page: QueryResultPageEntity
+    page: QueryResultPageEntity | null
 }

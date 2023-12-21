@@ -66,14 +66,18 @@ async function main() {
             }
         },
     );
-
-    logseq.App.registerCommandShortcut({
-        mode: 'editing',
-        mac: 'mod+4',
-        binding: 'ctrl+4'
+    logseq.App.registerCommand('newId', {
+        key: 'newId',
+        label: 'Generate new ID',
+        desc: 'Show modal to generate new ID for current block',
+        keybinding: {
+            binding: 'ctrl+\\',
+            mode: 'global'
+        }
     }, async () => {
         const position = await logseq.Editor.getEditingCursorPosition()
-        if (position != null) {
+        const currentBlock = await logseq.Editor.getCurrentBlock()
+        if (position && currentBlock) {
             logseq.showMainUI()
             setTimeout(() => {
                 var event = new CustomEvent(SLASH_TRIGGER_EVENT, {
@@ -84,7 +88,7 @@ async function main() {
                 document.dispatchEvent(event);
             }, 10)
         }
-    })
+    });
 }
 
 logseq.ready().then(main).catch(console.error);      

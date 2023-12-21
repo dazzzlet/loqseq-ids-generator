@@ -12,7 +12,7 @@ import { KEY_DOWN, KEY_ENTER, KEY_ESCAPE, KEY_UP } from 'const';
 import { useIdPrefixPages } from 'hooks/useIdPrefixPages';
 import { PrefixPage } from 'models/PrefixPage';
 import { orderBy } from 'utils';
-import { prependNewIdToCurrentBlock } from 'logseqUtils';
+import { prependNewIdToCurrentBlock } from 'logseq/utils';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -81,28 +81,57 @@ export function App({ themeMode: initialThemeMode }: Props) {
     const [filter, setFilter] = useState('');
     const [sortType, setSortType] = useState(PrefixSortType.NameAsc);
     const [selected, setSelected] = useState('');
+    const [pages, setPages] = useState<PrefixPage[]>([]);
     const themeMode = useThemeMode(initialThemeMode);
     const prefixes = useIdPrefixPages();
 
-    const orderByFuncBySorType = {
-        [PrefixSortType.NameAsc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => a.localeCompare(b),
-        [PrefixSortType.NameDesc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => b.localeCompare(a),
-        [PrefixSortType.UsageAsc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage),
-        [PrefixSortType.UsageDesc]: orderBy(([, entry]: [string, PrefixPage]) => entry.usage, true),
-    };
-    const pages = Object.entries(prefixes)
-        .sort(orderByFuncBySorType[sortType])
-        .filter(prefix => {
-            if (filter.trim() === '') return true;
-            return prefix.includes(filter);
-        })
-        .map(([, page]) => page);
+    useEffect(() => {
+        const orderByFuncBySorType = {
+            [PrefixSortType.NameAsc]: (a: PrefixPage, b: PrefixPage) => a.prefix.localeCompare(b.prefix),
+            [PrefixSortType.NameDesc]: (a: PrefixPage, b: PrefixPage) => b.prefix.localeCompare(a.prefix),
+            [PrefixSortType.UsageAsc]: orderBy((entry: PrefixPage) => entry.usage),
+            [PrefixSortType.UsageDesc]: orderBy((entry: PrefixPage) => entry.usage, true),
+        };
+        const searchString = filter.toLowerCase();
+        const exactMatch = Object.entries(prefixes).find(([prefix]) => prefix.toLowerCase() == searchString);
+        const pagesFilterByPrefix = Object.entries(prefixes)
+            .filter(([prefix, page]) => {
+                if (searchString.trim() === '') return true;
+                return prefix.toLowerCase().includes(searchString);
+            })
+            .map(([, page]) => page);
+        const filteredPages = pagesFilterByPrefix
+            .filter(page => {
+                if (searchString.trim() === '') return true;
+                return page.name.toLowerCase().includes(searchString);
+            })
+            .sort(orderByFuncBySorType[sortType]);
+        if (triggerSource == VisibleTriggerSource.SlashMenu) {
+            if (!exactMatch && !/\s/.test(searchString) && searchString.length >= 2) {
+                const newPrefix: PrefixPage = {
+                    max: 0,
+                    name: `Create new prefix with "${filter}"`,
+                    prefix: filter,
+                    padding: 0,
+                    page: null,
+                    sequence: true,
+                    start: 1,
+                    usage: 0
+                }
+                setPages([
+                    newPrefix,
+                    ...filteredPages
+                ]);
+                return;
+            }
+        }
+        setPages(filteredPages);
+    }, [filter, sortType, prefixes]);
 
     const executeSelectedPrefix = async (page?: PrefixPage) => {
         if (page) {
             if (triggerSource == VisibleTriggerSource.SlashMenu) {
-                await prependNewIdToCurrentBlock(page);
-                await logseq.Editor.restoreEditingCursor();
+                await prependNewIdToCurrentBlock(page, position);
             } else if (triggerSource == VisibleTriggerSource.Toolbar) {
                 logseq.App.pushState('page', { name: page.name.toLowerCase() })
             }
@@ -126,7 +155,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
         }
     };
 
-    const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    const handleInputKeyDown = async (e: React.KeyboardEvent) => {
         console.log('keydown', e.code, selected);
         if (e.code == KEY_UP) {
             e.stopPropagation();
@@ -136,10 +165,12 @@ export function App({ themeMode: initialThemeMode }: Props) {
             setSelected(getActivePrefixId(pages, 1));
         } else if (e.key == KEY_ESCAPE) {
             window.logseq.hideMainUI();
+            await window.logseq.Editor.restoreEditingCursor();
         } else if (e.key == KEY_ENTER) {
             const page = pages.find(p => p.prefix == selected);
-            executeSelectedPrefix(page);
+            await executeSelectedPrefix(page);
             window.logseq.hideMainUI();
+            await window.logseq.Editor.restoreEditingCursor();
         }
     }
 
@@ -151,9 +182,14 @@ export function App({ themeMode: initialThemeMode }: Props) {
     useEffect(() => {
         if (isVisible) {
             setFocus();
-            setSelected(pages[0].prefix);
+            setFilter('');
         }
     }, [isVisible, prefixes])
+
+    useEffect(() => {
+        isVisible && pages.length
+            && setSelected(pages[0].prefix);
+    }, [pages])
 
     if (isVisible) {
         return (
