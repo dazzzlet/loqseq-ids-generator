@@ -11,25 +11,33 @@ const StyledTagHeader = styled('div', {
     paddingBottom: '$3',
     paddingLeft: '$1',
     paddingRight: '$3',
-    cursor: 'default',
+    cursor: 'pointer',
 
     borderRadius: '$2',
     '&:hover, &.active': {
         backgroundColor: '$elevation2Hover',
     },
     [`& ${Text}`]: {
-        cursor: 'default',
+        cursor: 'pointer',
     },
 });
 
 type Props = {
     prefixPage: PrefixPage;
     active?: boolean;
+    onClick?: () => void;
 };
 
-export const PrefixEntry = ({ prefixPage, active }: Props) => {
+export const PrefixEntry = ({ prefixPage, active, onClick }: Props) => {
+
+    const handleItemClick = () => {
+        if (onClick) {
+            onClick();
+        }
+    }
+
     return (
-        <StyledTagHeader className={(active ? 'active' : '')}>
+        <StyledTagHeader className={(active ? 'active' : '')} onClick={handleItemClick}>
             <Text size='2' css={{ flex: 1 }}>
                 [{prefixPage.prefix}] {prefixPage.name}
             </Text>

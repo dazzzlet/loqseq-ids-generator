@@ -1,7 +1,8 @@
 import { AppUserConfigs } from '@logseq/libs/dist/LSPlugin';
 import { Input } from 'components/Input';
+import { Text } from 'components/Text';
 import React, { useEffect, useRef, useState } from 'react';
-import { css, darkTheme } from './stitches.config';
+import { css, darkTheme, styled } from './stitches.config';
 import { useAppVisible } from 'hooks/useAppVisible';
 import { useThemeMode } from 'hooks/useThemeMode';
 import { useFocus } from 'hooks/useFocus';
@@ -51,6 +52,12 @@ const app = css({
     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
 });
 
+const ModelTitle = styled(Text, {
+    textAlign: 'center',
+    marginBottom: '$3',
+    color: '$highContrast'
+});
+
 const getActivePrefixId = (prefixes: PrefixPage[], step: number): (selected: string) => string => {
     return (selected: string) => {
         const selectedIndex = prefixes.findIndex(prefix => prefix.prefix == selected);
@@ -77,12 +84,6 @@ export function App({ themeMode: initialThemeMode }: Props) {
     const themeMode = useThemeMode(initialThemeMode);
     const prefixes = useIdPrefixPages();
 
-    useEffect(() => {
-        if (isVisible) {
-            setFocus();
-        }
-    }, [isVisible])
-
     const orderByFuncBySorType = {
         [PrefixSortType.NameAsc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => a.localeCompare(b),
         [PrefixSortType.NameDesc]: ([a]: [string, PrefixPage], [b]: [string, PrefixPage]) => b.localeCompare(a),
@@ -97,17 +98,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
         })
         .map(([, page]) => page);
 
-    const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFilter(e.target.value);
-        if (pages.length) {
-            setSelected(pages[0].prefix);
-        } else {
-            setSelected('');
-        }
-    };
-
-    const executeSelectedPrefix = () => {
-        const page = pages.find(p => p.prefix == selected);
+    const executeSelectedPrefix = (page?: PrefixPage) => {
         if (page) {
             if (triggerSource == VisibleTriggerSource.SlashMenu) {
 
@@ -116,6 +107,23 @@ export function App({ themeMode: initialThemeMode }: Props) {
             }
         }
     }
+
+    const getModalTitle = () => {
+        if (triggerSource == VisibleTriggerSource.SlashMenu) {
+            return "Generate new ID";
+        } else if (triggerSource == VisibleTriggerSource.Toolbar) {
+            return "List of existed prefixes";
+        }
+    }
+
+    const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFilter(e.target.value);
+        if (pages.length) {
+            setSelected(pages[0].prefix);
+        } else {
+            setSelected('');
+        }
+    };
 
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
         console.log('keydown', e.code, selected);
@@ -128,9 +136,29 @@ export function App({ themeMode: initialThemeMode }: Props) {
         } else if (e.key == KEY_ESCAPE) {
             window.logseq.hideMainUI();
         } else if (e.key == KEY_ENTER) {
-            executeSelectedPrefix();
+            const page = pages.find(p => p.prefix == selected);
+            executeSelectedPrefix(page);
+            window.logseq.hideMainUI();
         }
     }
+
+    const handleItemOnClick = (page: PrefixPage) => {
+        executeSelectedPrefix(page);
+        window.logseq.hideMainUI();
+    }
+
+    useEffect(() => {
+        if (isVisible) {
+            setFocus();
+        }
+    }, [isVisible])
+
+    useEffect(() => {
+        if (isVisible) {
+            setSelected(pages[0].prefix);
+        }
+    }, [prefixes, isVisible])
+
 
     if (isVisible) {
         return (
@@ -143,6 +171,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
                 }}
             >
                 <div ref={innerRef} className={app()}>
+                    <ModelTitle>{getModalTitle()}</ModelTitle>
                     <Input
                         css={{ padding: '$3', borderRadius: '$2' }}
                         size='2'
@@ -154,6 +183,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
                     <PrefixList
                         selected={selected}
                         prefixes={pages}
+                        onClick={handleItemOnClick}
                     />
                 </div>
             </main>
