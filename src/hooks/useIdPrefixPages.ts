@@ -26,14 +26,17 @@ export const useIdPrefixPages = (): Record<string, PrefixPage> => {
                 [(re-pattern "(?i)\\\\d+$") ?idMatch]
 
                 (or-join [?match ?idMatch ?start ?sumAttr ?id ?idValue]
-                            (and [?usageBlock :block/refs ?idPage]
-                                    [?idPage :block/name ?id]
-                                    [(re-find ?match ?id)]
-                                    [(re-find ?idMatch ?id) ?idValue]
-                                    [(+ 1) ?sumAttr])
-                            (and [(+ 0) ?id]
-                                    [(str ?start) ?idValue]
-                                    [(+ 0) ?sumAttr])
+                    (and [?usageBlock :block/refs ?idPage]
+                             [?idPage :block/name ?id]
+                             [(re-find ?match ?id)]
+                             [(re-find ?idMatch ?id) ?idValue]
+                             [(+ 1) ?sumAttr])
+                    (and [(+ 0) ?id]
+                             [(str "00000000" ?start) ?startValue]
+                             [(count ?startValue) ?startValueLen]
+                             [(- ?startValueLen ?start) ?subIndex]
+                             [(subs ?startValue 6) ?idValue]
+                             [(+ 0) ?sumAttr])
                 )
         ]
     `);

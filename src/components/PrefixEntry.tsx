@@ -24,11 +24,12 @@ const StyledTagHeader = styled('div', {
 
 type Props = {
     prefixPage: PrefixPage;
+    showNextId?: boolean;
     active?: boolean;
     onClick?: () => void;
 };
 
-export const PrefixEntry = ({ prefixPage, active, onClick }: Props) => {
+export const PrefixEntry = ({ prefixPage, active, showNextId, onClick }: Props) => {
 
     const handleItemClick = () => {
         if (onClick) {
@@ -40,6 +41,18 @@ export const PrefixEntry = ({ prefixPage, active, onClick }: Props) => {
         <StyledTagHeader className={(active ? 'active' : '')} onClick={handleItemClick}>
             <Text size='2' css={{ flex: 1 }}>
                 [{prefixPage.prefix}] {prefixPage.name}
+            </Text>
+            <Text
+                size='1'
+                css={{
+                    padding: '$2',
+                    marginRight: '$1',
+                    borderRadius: '$round',
+                    backgroundColor: '$blue4',
+                    color: '$slate9',
+                }}
+            >
+                {prefixPage.max + (showNextId ? 1 : 0)}
             </Text>
             <Text
                 size='1'

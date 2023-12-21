@@ -65,7 +65,26 @@ async function main() {
                 }, 10)
             }
         },
-    )
+    );
+
+    logseq.App.registerCommandShortcut({
+        mode: 'editing',
+        mac: 'mod+4',
+        binding: 'ctrl+4'
+    }, async () => {
+        const position = await logseq.Editor.getEditingCursorPosition()
+        if (position != null) {
+            logseq.showMainUI()
+            setTimeout(() => {
+                var event = new CustomEvent(SLASH_TRIGGER_EVENT, {
+                    "detail": {
+                        position
+                    }
+                });
+                document.dispatchEvent(event);
+            }, 10)
+        }
+    })
 }
 
 logseq.ready().then(main).catch(console.error);      

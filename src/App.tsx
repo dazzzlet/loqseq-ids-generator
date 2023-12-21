@@ -12,7 +12,7 @@ import { KEY_DOWN, KEY_ENTER, KEY_ESCAPE, KEY_UP } from 'const';
 import { useIdPrefixPages } from 'hooks/useIdPrefixPages';
 import { PrefixPage } from 'models/PrefixPage';
 import { orderBy } from 'utils';
-import { prefix } from '@fortawesome/free-solid-svg-icons';
+import { prependNewIdToCurrentBlock } from 'logseqUtils';
 
 type Props = {
     themeMode: AppUserConfigs['preferredThemeMode'];
@@ -98,10 +98,11 @@ export function App({ themeMode: initialThemeMode }: Props) {
         })
         .map(([, page]) => page);
 
-    const executeSelectedPrefix = (page?: PrefixPage) => {
+    const executeSelectedPrefix = async (page?: PrefixPage) => {
         if (page) {
             if (triggerSource == VisibleTriggerSource.SlashMenu) {
-
+                await prependNewIdToCurrentBlock(page);
+                await logseq.Editor.restoreEditingCursor();
             } else if (triggerSource == VisibleTriggerSource.Toolbar) {
                 logseq.App.pushState('page', { name: page.name.toLowerCase() })
             }
@@ -142,8 +143,8 @@ export function App({ themeMode: initialThemeMode }: Props) {
         }
     }
 
-    const handleItemOnClick = (page: PrefixPage) => {
-        executeSelectedPrefix(page);
+    const handleItemOnClick = async (page: PrefixPage) => {
+        await executeSelectedPrefix(page);
         window.logseq.hideMainUI();
     }
 
@@ -183,6 +184,7 @@ export function App({ themeMode: initialThemeMode }: Props) {
                     <PrefixList
                         selected={selected}
                         prefixes={pages}
+                        showNextId={triggerSource == VisibleTriggerSource.SlashMenu}
                         onClick={handleItemOnClick}
                     />
                 </div>

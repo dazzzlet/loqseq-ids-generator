@@ -12,10 +12,11 @@ const StyldTagList = styled('div', {
 type Props = {
     prefixes: PrefixPage[];
     selected: string;
+    showNextId?: boolean;
     onClick?: (prefixPage: PrefixPage) => void;
 };
 
-export function PrefixList({ prefixes, selected, onClick }: Props) {
+export function PrefixList({ prefixes, selected, showNextId, onClick }: Props) {
     const handleItemClick = (prefixPage: PrefixPage) => {
         return () => {
             if (onClick) {
@@ -31,6 +32,7 @@ export function PrefixList({ prefixes, selected, onClick }: Props) {
                         <PrefixEntry key={page.prefix}
                             active={page.prefix == selected}
                             prefixPage={page}
+                            showNextId={showNextId}
                             onClick={handleItemClick(page)} />
                     );
                 })}
