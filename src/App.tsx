@@ -85,49 +85,6 @@ export function App({ themeMode: initialThemeMode }: Props) {
     const themeMode = useThemeMode(initialThemeMode);
     const prefixes = useIdPrefixPages();
 
-    useEffect(() => {
-        const orderByFuncBySorType = {
-            [PrefixSortType.NameAsc]: (a: PrefixPage, b: PrefixPage) => a.prefix.localeCompare(b.prefix),
-            [PrefixSortType.NameDesc]: (a: PrefixPage, b: PrefixPage) => b.prefix.localeCompare(a.prefix),
-            [PrefixSortType.UsageAsc]: orderBy((entry: PrefixPage) => entry.usage),
-            [PrefixSortType.UsageDesc]: orderBy((entry: PrefixPage) => entry.usage, true),
-        };
-        const searchString = filter.toLowerCase();
-        const exactMatch = Object.entries(prefixes).find(([prefix]) => prefix.toLowerCase() == searchString);
-        const pagesFilterByPrefix = Object.entries(prefixes)
-            .filter(([prefix, page]) => {
-                if (searchString.trim() === '') return true;
-                return prefix.toLowerCase().includes(searchString);
-            })
-            .map(([, page]) => page);
-        const filteredPages = pagesFilterByPrefix
-            .filter(page => {
-                if (searchString.trim() === '') return true;
-                return page.name.toLowerCase().includes(searchString);
-            })
-            .sort(orderByFuncBySorType[sortType]);
-        if (triggerSource == VisibleTriggerSource.SlashMenu) {
-            if (!exactMatch && !/\s/.test(searchString) && searchString.length >= 2) {
-                const newPrefix: PrefixPage = {
-                    max: 0,
-                    name: `Create new prefix with "${filter}"`,
-                    prefix: filter,
-                    padding: 0,
-                    page: null,
-                    sequence: true,
-                    start: 1,
-                    usage: 0
-                }
-                setPages([
-                    newPrefix,
-                    ...filteredPages
-                ]);
-                return;
-            }
-        }
-        setPages(filteredPages);
-    }, [filter, sortType, prefixes]);
-
     const executeSelectedPrefix = async (page?: PrefixPage) => {
         if (page) {
             if (triggerSource == VisibleTriggerSource.SlashMenu) {
@@ -178,6 +135,45 @@ export function App({ themeMode: initialThemeMode }: Props) {
         await executeSelectedPrefix(page);
         window.logseq.hideMainUI();
     }
+
+    useEffect(() => {
+        const orderByFuncBySorType = {
+            [PrefixSortType.NameAsc]: (a: PrefixPage, b: PrefixPage) => a.prefix.localeCompare(b.prefix),
+            [PrefixSortType.NameDesc]: (a: PrefixPage, b: PrefixPage) => b.prefix.localeCompare(a.prefix),
+            [PrefixSortType.UsageAsc]: orderBy((entry: PrefixPage) => entry.usage),
+            [PrefixSortType.UsageDesc]: orderBy((entry: PrefixPage) => entry.usage, true),
+        };
+        const searchString = filter.toLowerCase();
+        const exactMatch = Object.entries(prefixes).find(([prefix]) => prefix.toLowerCase() == searchString);
+        const filteredPages = Object.entries(prefixes)
+            .filter(([prefix, page]) => {
+                if (searchString.trim() === '') return true;
+                return prefix.toLowerCase().includes(searchString)
+                    || page.name.toLowerCase().includes(searchString)
+            })
+            .map(([, page]) => page)
+            .sort(orderByFuncBySorType[sortType]);
+        if (triggerSource == VisibleTriggerSource.SlashMenu) {
+            if (!exactMatch && !/\s/.test(searchString) && searchString.length >= 2) {
+                const newPrefix: PrefixPage = {
+                    max: 0,
+                    name: `Create new prefix with "${filter}"`,
+                    prefix: filter,
+                    padding: 0,
+                    page: null,
+                    sequence: true,
+                    start: 1,
+                    usage: 0
+                }
+                setPages([
+                    ...filteredPages,
+                    newPrefix
+                ]);
+                return;
+            }
+        }
+        setPages(filteredPages);
+    }, [filter, sortType, prefixes]);
 
     useEffect(() => {
         if (isVisible) {
